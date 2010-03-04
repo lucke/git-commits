@@ -16,26 +16,22 @@ Por ahora lo mejor será hacerlo por fecha. Currar algoritmo que recorre el árb
 */
 
 
-var git_repository = function() {
+var repository = function() {
 	/* Call to the parent constructor */
 	EzWebGadget.call(this, {translatable: false});
 }
 
-git_repository.prototype = new EzWebGadget(); /* Extend from EzWebGadget */
-git_repository.prototype.resourcesURL = "http://localhost/gadgets/repository-commits/";
+repository.prototype = new EzWebGadget(); /* Extend from EzWebGadget */
+repository.prototype.resourcesURL = "http://localhost/gadgets/repository-commits/";
 
 /******************** OVERWRITE METHODS **************************/
-git_repository.prototype.init = function() {
+repository.prototype.init = function() {
 
 	// Initialize EzWeb variables
 
-       	this.form_config = {};
-
-	this.changed_repo = true;		// Esto es para mandar el árbol a repository-tree, cuando se cambia de repo (SaveForm)
-
-	this.repository = [];							// Name of the repository on the remote machine
+	this.path = "";								// Path to repository on remote machine
 	this.url = "";								// URL to REST API
-	this.is_configured = false;						// True if Repository and URL are set, false otherwise
+	this.is_configured = false;						// True if Path and URL are set, false otherwise
 
 	this.lista_commits = [];						// Lista de commits a mostrar
 	this.branches = []; 		// Branches del repositorio
@@ -47,16 +43,14 @@ git_repository.prototype.init = function() {
 
 	this.first_load = true;		// Primera carga del gadget
 	
-	this.select_branch;		// Select Branch
-	this.select_repository;		// Select Repository
-	this.lista_repos = [];
+	this.select_branch;		// Selec Branch
 
 
-	this.eventRepository = EzWebAPI.createRWGadgetVariable("eventRepository");		// Send Repository name to other gadgets
+	this.eventPath = EzWebAPI.createRWGadgetVariable("eventPath");		// Send "path" to other gadgets
 	this.eventUrl = EzWebAPI.createRWGadgetVariable("eventUrl");		// Send "URL" to other gadgets
 	this.eventTree = EzWebAPI.createRWGadgetVariable("eventTree");		// Send a commit's tree SHA1 key to other gadgets.
 
-	this.saved_repository = EzWebAPI.createRWGadgetVariable("saved_repository");	// Saved property Repository name
+	this.saved_path = EzWebAPI.createRWGadgetVariable("saved_path");	// Saved property Path
 	this.saved_url = EzWebAPI.createRWGadgetVariable("saved_url");		// Saved property URL
 
 	// CONSTANTS. Webpage alternatives (different views)
@@ -82,7 +76,7 @@ git_repository.prototype.init = function() {
 }
 
 
-git_repository.prototype._createUserInterface = function() {
+repository.prototype._createUserInterface = function() {
 
 	var body = document.getElementsByTagName("body")[0];
 
@@ -99,12 +93,10 @@ git_repository.prototype._createUserInterface = function() {
 	header.appendChild(header_left);
 	
 	header_left.appendChild(this._createHeaderButton("images/view.png", "View Repository", EzWebExt.bind(function() { 
-		document.getElementById('select_wrapper').style.visibility = 'visible'; 
 		this.alternatives.showAlternative(this.MAIN_ALTERNATIVE);
 		this.reload();
 	}, this)));
 	header_left.appendChild(this._createHeaderButton("images/config.png", "Settings", EzWebExt.bind(function() { 
-		document.getElementById('select_wrapper').style.visibility = 'hidden'; 
 		this.alternatives.showAlternative(this.CONFIG_ALTERNATIVE);
 		this.repaint();
 	}, this)));
@@ -151,6 +143,8 @@ git_repository.prototype._createUserInterface = function() {
 	row.appendChild(title);
 	row.appendChild(this._createHeaderButton("images/save.png", "Save", EzWebExt.bind(function() { 
 		if (
+			this.form_config &&
+			this.form_config["path"].getValue() != "" &&
 			this.form_config["url"].getValue() != ""){
 		
 			this.saveForm();
@@ -169,26 +163,19 @@ git_repository.prototype._createUserInterface = function() {
        	var config_body = document.createElement("div");
 	tablebody.appendChild(config_body);  
         
-//	var repository_text = new StyledElements.StyledTextField();                ///////////////// CONVERTIR ESTO A UN SELECT
+       	this.form_config = {};
 
-
-// SELECT DEL CONFIG
-
-	var select_repos = document.createElement("div");
-	select_repos.id = "select_repos";
-	row.appendChild(select_repos);
-
+	var path_text = new StyledElements.StyledTextField();
 	var url_text = new StyledElements.StyledTextField();
 	
-//	this.form_config["repository"] = this.select_repository.getValue();				// ASIGNAR EL VALOR DEL SELECT, QUE PUTADA PORQ EL SELECT ES ACCESO A API!!
-
+	this.form_config["path"] = path_text;
 	this.form_config["url"] = url_text;
 
        	row = document.createElement("div");
-	row.appendChild(this._createCell(document.createTextNode("Repository" + ":"), "title"));
-//	row.appendChild(this._createCell(repository_text, "value"));
+	row.appendChild(this._createCell(document.createTextNode("Path" + ":"), "title"));
+	row.appendChild(this._createCell(path_text, "value"));
 	if (this.is_configured) {
-//		this.form_config["repository"].setValue(this.repository);     ------> ???
+		this.form_config["path"].setValue(this.path);
 	}
 	config_body.appendChild(row);
 	
@@ -202,17 +189,9 @@ git_repository.prototype._createUserInterface = function() {
 
 	// If there are Saved settings, load Commits Alternative, else, it displays the configuration alternative.
 
-	if(this.first_load) {
-
-		this.getRepositories(this.url);
-
-	}
-
-
-
 	if(this.is_configured) {
 			
-		this.getBranches(this.url, this.repository);
+		this.getBranches(this.url, this.path);
 
 	}
 
@@ -222,7 +201,7 @@ git_repository.prototype._createUserInterface = function() {
 }
 
 
-git_repository.prototype._createHeaderButton = function(src, title, handler) {
+repository.prototype._createHeaderButton = function(src, title, handler) {
 	var div = document.createElement("div");
 	EzWebExt.addClassName(div, "image");
 	
@@ -235,23 +214,19 @@ git_repository.prototype._createHeaderButton = function(src, title, handler) {
 	return div
 }
 
-git_repository.prototype.getRepositories = function (url) {
 
-	this.sendGet(url+"?op=0", this.displayRepos, this.displayErrorRepos, this.displayExceptionRepos);
 
-}
+repository.prototype.getBranches = function (url, path) {
 
-git_repository.prototype.getBranches = function (url, repository) {
-
-	this.sendGet(url+"?repository="+repository[1]+"&op=1", this.displayBranches, this.displayErrorBranches, this.displayExceptionBranches);
+	this.sendGet(url+"?path="+path+"&op=1", this.displayBranches, this.displayErrorBranches, this.displayExceptionBranches);
 
 }
 
 
-git_repository.prototype.getCommits = function (url, repository, page) {
+repository.prototype.getCommits = function (url, path, page) {
 
 
-	this.sendGet(url+"?repository="+repository[1]+"&op=2"+"&branch="+this.active_branch[1]+"&page="+page,
+	this.sendGet(url+"?path="+path+"&op=2"+"&branch="+this.active_branch[1]+"&page="+page,
 			this.displayCommits,
 			this.displayErrorCommits,
 			this.displayExceptionCommits);
@@ -259,35 +234,8 @@ git_repository.prototype.getCommits = function (url, repository, page) {
 
 }
 
-git_repository.prototype.displayRepos = function(resp) {
 
-	var resp_json = eval('(' + resp.responseText + ')');
-
-	for (i=0; i<resp_json.length; i++) {
-
-		this.lista_repos[i] = [i, resp_json[i]];
-
-		if (this.repository[1] == resp_json[i]) {
-			this.repository[0] = i;
-		}
-
-	}
-
-
-	this.select_repository = new StyledElements.StyledSelect({initialEntries: this.lista_repos, initialValue: this.repository[0]});
-	this.select_repository.addEventListener('change', this.change_repository);
-
-	this.select_repository.id = "select";
-
-//	this.select_repository.wrapperElement.style.cssFloat = 'right';
-
-	this.select_repository.insertInto(document.getElementById('select_repos'));
-
-//	this.first_load = false;
-
-}
-
-git_repository.prototype.displayBranches = function(resp) {
+repository.prototype.displayBranches = function(resp) {
 
 
 	var resp_json = eval('(' + resp.responseText + ')');
@@ -332,46 +280,26 @@ git_repository.prototype.displayBranches = function(resp) {
 		this.first_load = false;	
 	}
 
-	this.getCommits(this.url, this.repository, this.page);
+	this.getCommits(this.url, this.path, this.page);
 
 }
 
-git_repository.prototype.change_branch = function(select) {
+repository.prototype.change_branch = function(select) {
 
 	// Ahora hay que cambiar la branch, es decir, active_branch = a la que toca y llamar a los commits, listo.
 
-	git_repository.active_branch[0] = select.getValue();
-	git_repository.active_branch[1] = git_repository.branches[git_repository.active_branch[0]][1];  // este es el nombre de la branch
+	repository.active_branch[0] = select.getValue();
+	repository.active_branch[1] = repository.branches[repository.active_branch[0]][1];  // este es el nombre de la branch
 
-	git_repository.page = 0;  			// Reiniciar las páginas...
-	git_repository.pagant_enabled = false;
-	git_repository.pagsig_enabled = true;
+	repository.page = 0;  			// Reiniciar las páginas...
+	repository.pagant_enabled = false;
+	repository.pagsig_enabled = true;
 
-	git_repository.getCommits(git_repository.url, git_repository.repository, git_repository.page);
+	repository.getCommits(repository.url, repository.path, repository.page);
 
 }
 
-git_repository.prototype.change_repository = function(select) {
-
-
-	git_repository.form_config["repository_index"] = select.getValue();
-	git_repository.form_config["repository"] = git_repository.lista_repos[git_repository.form_config["repository_index"]][1];
-
-//	git_repository.getBranches(git_repository.url, git_repository.repository, git_repository.page);
-
-/*
-	git_repository.active_branch[0] = select.getValue();
-	git_repository.active_branch[1] = git_repository.branches[git_repository.active_branch[0]][1];  // este es el nombre de la branch
-
-	git_repository.page = 0;  			// Reiniciar las páginas...
-	git_repository.pagant_enabled = false;
-	git_repository.pagsig_enabled = true;
-
-	git_repository.getCommits(git_repository.url, git_repository.repository, git_repository.page);
-*/
-}
-
-git_repository.prototype.displayCommits = function(resp) {
+repository.prototype.displayCommits = function(resp) {
 
 	var resp_json = eval('(' + resp.responseText + ')');
 
@@ -402,7 +330,7 @@ git_repository.prototype.displayCommits = function(resp) {
 	for (i=0;i<n_commits;i++) {
 
 		html +=	"<li>";
-		html += '<a href = "javascript: git_repository.show_commit('+i+');" class="node">'; 
+		html += '<a href = "javascript: repository.show_commit('+i+');" class="node">'; 
 		html += this.lista_commits[i].commit_message.split('\n')[0];			// Mostrar la primera línea del mensaje del commit
 		html += "</a>";
 		html += "</li>";
@@ -458,8 +386,25 @@ if (this.config.useStatusText) str += ' onmouseover=document.getElementById("s' 
 
 	}
 
+//    	var button_pagant = new StyledElements.StyledButton({text: 'Anterior'});
+//    	var button_pagsig = new StyledElements.StyledButton({text: 'Siguiente'});
+
 	button_pagant.style.cssFloat = 'left';
 	button_pagsig.style.cssFloat = 'right';
+
+/*	var prev_commit = function() {
+		this.page -= 1;
+		this.getCommits(this.url, this.path, this.page);
+	};
+
+	var next_commit = function(button) {
+		this.page += 1;
+		this.getCommits(this.url, this.path, this.page);
+	};
+
+	button_pagant.addEventListener('click', prev_commit);
+	button_pagsig.addEventListener('click', next_commit);
+*/
 
 	content_pagination.appendChild(button_pagant);
 	content_pagination.appendChild(button_pagsig);
@@ -469,36 +414,31 @@ if (this.config.useStatusText) str += ' onmouseover=document.getElementById("s' 
 
 	this.hpaned.getLeftPanel().appendChild(content_left);
 	this.hpaned.getRightPanel().appendChild(content_right);
-
-	if (this.changed_repo == true) {
-		this.send_tree(0);			// Mandamos que se cargue el árbol si acabo de cambiar de repositorio
-		this.changed_repo = false;
-	}
 }
 
-git_repository.prototype.prev_commit = function() {
+repository.prototype.prev_commit = function() {
 
-	git_repository.page -= 1;
-	if (git_repository.page == 0) {
-		git_repository.pagant_enabled = false;
+	repository.page -= 1;
+	if (repository.page == 0) {
+		repository.pagant_enabled = false;
 		document.getElementById("button_pagant").disabled = true;
 	}
-	git_repository.getCommits(git_repository.url, git_repository.repository, git_repository.page);
+	repository.getCommits(repository.url, repository.path, repository.page);
 
 }
 
-git_repository.prototype.next_commit = function() {
+repository.prototype.next_commit = function() {
 
-	git_repository.page += 1;
-	if (git_repository.page != 0) {
-		git_repository.pagant_enabled = true;
+	repository.page += 1;
+	if (repository.page != 0) {
+		repository.pagant_enabled = true;
 		document.getElementById("button_pagant").disabled = false;
 	}
-	git_repository.getCommits(git_repository.url, git_repository.repository, git_repository.page);
+	repository.getCommits(repository.url, repository.path, repository.page);
 
 }
 
-git_repository.prototype.show_commit = function(commit) {
+repository.prototype.show_commit = function(commit) {
 
 
 	var html;
@@ -561,54 +501,37 @@ git_repository.prototype.show_commit = function(commit) {
 }
 
 
-git_repository.prototype.displayErrorBranches = function(n_error) {
+repository.prototype.displayErrorBranches = function(n_error) {
 
-	this.alert("Error Branches", "No se puede acceder al repositorio: "+ n_error, EzWebExt.ALERT_ERROR);
+	this.alert("Error Branches", "No se puede acceder al repositorio", EzWebExt.ALERT_ERROR);
 		
 }
 
 
-git_repository.prototype.displayExceptionBranches = function(n_exception) {
+repository.prototype.displayExceptionBranches = function(n_exception) {
 
-	this.alert("Exception Branches", "Error inesperado: "+ n_exception, EzWebExt.ALERT_ERROR);
+	this.alert("Exception Branches", "Error inesperado", EzWebExt.ALERT_ERROR);
 
 }
 
 
-git_repository.prototype.displayErrorCommits = function(n_error) {
+repository.prototype.displayErrorCommits = function(n_error) {
 
 	
-	this.alert("Error Commits", "No se puede acceder al repositorio: "+ n_error, EzWebExt.ALERT_ERROR);
-
-	
-}
-
-git_repository.prototype.displayExceptionCommits = function(n_exception) {
-
-	this.alert("Exception Commits", "Error inesperado: "+ n_exception, EzWebExt.ALERT_ERROR);
+	this.alert("Error Commits", "No se puede acceder al repositorio", EzWebExt.ALERT_ERROR);
 
 	
 }
 
+repository.prototype.displayExceptionCommits = function(n_exception) {
 
-
-git_repository.prototype.displayErrorRepos = function(n_error) {
-
-	
-	this.alert("Error Repos", "No se puede acceder al repositorio: " + n_error, EzWebExt.ALERT_ERROR);
-
-	
-}
-
-git_repository.prototype.displayExceptionRepos = function(n_exception) {
-
-	this.alert("Exception Repos", "Error inesperado: " + n_exception, EzWebExt.ALERT_ERROR);
+	this.alert("Exception Commits", "Error inesperado", EzWebExt.ALERT_ERROR);
 
 	
 }
 
 
-git_repository.prototype.repaint = function() {
+repository.prototype.repaint = function() {
 	var height = (document.defaultView.innerHeight - document.getElementById('header').offsetHeight);
 	document.getElementById('content').style.height = height + 'px';
 	this.alternatives.repaint();
@@ -616,7 +539,7 @@ git_repository.prototype.repaint = function() {
 
 }
 
-git_repository.prototype.reload = function () {
+repository.prototype.reload = function () {
 
 	if(this.is_configured) {
 		this.alternatives.showAlternative(this.MAIN_ALTERNATIVE);
@@ -630,7 +553,7 @@ git_repository.prototype.reload = function () {
 }
 
 
-git_repository.prototype._createCell = function(element, className) {
+repository.prototype._createCell = function(element, className) {
 	var cell = document.createElement("div");
 	var span = document.createElement("span");
 	if (element instanceof StyledElements.StyledElement) {
@@ -644,31 +567,27 @@ git_repository.prototype._createCell = function(element, className) {
 }
 
 
-git_repository.prototype.saveForm = function() {
-	this.repository[0] = this.form_config["repository_index"];
-	this.repository[1] = this.form_config["repository"];
+repository.prototype.saveForm = function() {
+	this.path = this.form_config["path"].getValue();
 	this.url = this.form_config["url"].getValue();
-	this.page = 0; 
-	this.pagant_enabled = false;
 	this.is_configured = true;
 	this.save();
-	this.changed_repo = true;
-	this.getBranches(this.url, this.repository);
+	this.getBranches(this.url, this.path);
 }
 
 
-git_repository.prototype.save = function() {
+repository.prototype.save = function() {
 
-	this.saved_repository.set(this.repository[1]);
+	this.saved_path.set(this.path);
 	this.saved_url.set(this.url);
 	
 }
 
-git_repository.prototype.restore = function() {
+repository.prototype.restore = function() {
 
-	if(this.saved_repository.get()!="") {
+	if(this.saved_path.get()!="") {
 
-		this.repository[1] = this.saved_repository.get();
+		this.path = this.saved_path.get();
 		this.url = this.saved_url.get();
 		this.is_configured = true;
 
@@ -678,10 +597,10 @@ git_repository.prototype.restore = function() {
 
 
 
-git_repository.prototype.send_tree = function(commit) {
+repository.prototype.send_tree = function(commit) {
 
-	this.eventRepository.set(this.repository[1]);			// ?? porque no coger los this.repository, this.url, etc?
-	this.eventUrl.set(this.url);
+	this.eventPath.set(this.saved_path.get());
+	this.eventUrl.set(this.saved_url.get());
 	this.eventTree.set(this.lista_commits[commit].tree);
 
 
@@ -690,7 +609,7 @@ git_repository.prototype.send_tree = function(commit) {
 
 
 /* Instanciate the Gadget class */
-git_repository = new git_repository();
+repository = new repository();
 
 
 
