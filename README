@@ -1,0 +1,5 @@
+git-commits
+-----------
+
+EzWeb gadget (Morpheo project) to browse git's commits.
+Data feeded via API REST JSON responses.
