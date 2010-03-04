@@ -2,20 +2,6 @@
 //////////// Class repository ///////////////
 /////////////////////////////////////////////
 
-
-/* To Do
-
-* Primero display branches (botones?). Al seleccionar Branch, pedir commits (en servidor) (por default hace la master)
-
-Por ahora lo mejor será hacerlo por fecha. Currar algoritmo que recorre el árbol, compara las fechas y devuelve los datos del commit, ordenados de más reciente a más antiguo (10). Pensarlo para N. Luego habrá que ver el tema de las branches y merges
-
-* Convertir la lista de commits en botones y que tengan un texto mas representativo.
-
-* Al pinchar en cada commit, mostramos en el recuadro de la derecha la información del commit y enviamos el id del árbol al gadget de árbol.
-
-*/
-
-
 var git_repository = function() {
 	/* Call to the parent constructor */
 	EzWebGadget.call(this, {translatable: false});
@@ -32,7 +18,7 @@ git_repository.prototype.init = function() {
        	this.form_config = {};
 
 	this.github_radio = "";
-	this.github = false;
+	this.github = false;			// False = local access; true = github access;
 
 	this.changed_repo = true;		// Esto es para mandar el árbol a repository-tree, cuando se cambia de repo (SaveForm)
 
@@ -104,15 +90,15 @@ git_repository.prototype._createUserInterface = function() {
 	header_left.id = "header_left";
 	header.appendChild(header_left);
 	
-	header_left.appendChild(this._createHeaderButton("images/view.png", "View Repository", EzWebExt.bind(function() { 
-		document.getElementById('select_wrapper').style.visibility = 'visible'; 
-		this.alternatives.showAlternative(this.MAIN_ALTERNATIVE);
-		this.reload();
+	header_left.appendChild(this._createHeaderButton("images/view.png", "View Repository", EzWebExt.bind(function() { 	// Creates a button
+		document.getElementById('select_wrapper').style.visibility = 'visible'; 					// Show branches selector
+		this.alternatives.showAlternative(this.MAIN_ALTERNATIVE);							// Show commit alternative
+		this.reload();													// Load settings and paint
 	}, this)));
-	header_left.appendChild(this._createHeaderButton("images/config.png", "Settings", EzWebExt.bind(function() { 
-		document.getElementById('select_wrapper').style.visibility = 'hidden'; 
-		this.alternatives.showAlternative(this.CONFIG_ALTERNATIVE);
-		this.repaint();
+	header_left.appendChild(this._createHeaderButton("images/config.png", "Settings", EzWebExt.bind(function() { 		// Creates a button
+		document.getElementById('select_wrapper').style.visibility = 'hidden'; 						// Hiddens branches selector
+		this.alternatives.showAlternative(this.CONFIG_ALTERNATIVE);							// Show Config alternative
+		this.repaint();													// Paint alternative
 	}, this)));
 
 	// Header right (Branches selector)
@@ -121,17 +107,13 @@ git_repository.prototype._createUserInterface = function() {
 	header_right.id = "header_right";
 	header.appendChild(header_right);
 
-//	header_right.innerHTML = "Select Repository Branch: ";
+//	header_right.innerHTML = "Select Repository Branch: ";						// TO DO!!!!
 
-
-
-// Temita branches
-
-	var select_wrapper = document.createElement("div");
+	var select_wrapper = document.createElement("div");				// Branches selector
 	select_wrapper.id = "select_wrapper";
 	header_right.appendChild(select_wrapper);
 
-//
+// ****************************************************************************************************************************** //
 
 	// Body wrapper
 
@@ -140,115 +122,369 @@ git_repository.prototype._createUserInterface = function() {
 	body.appendChild(content);
 	
 	// CONFIGURATION ALTERNAVITE
+	// -------------------------
+
+	// Wrappers
 
 	var configAlternative = this.alternatives.createAlternative();
-	var config_content = document.createElement("div");
-       
-        configAlternative.appendChild(config_content);
-        
-        headerrow = document.createElement("div");
-        config_content.appendChild(headerrow);
-        
-        var row = document.createElement("div");
-	
-	var title = document.createElement("span");
-	title.appendChild(document.createTextNode("SETTINGS"));
-	
-	row.appendChild(title);
-	row.appendChild(this._createHeaderButton("images/save.png", "Save", EzWebExt.bind(function() { 
-		if (
-			this.form_config["url"].getValue() != ""){
-			document.getElementById('select_wrapper').style.visibility = 'visible'; 
-			this.saveForm();
-			this.reload();
-		}
-		else {
-			this.alert("Error", "Must fill all form fields", {type: EzWebExt.ALERT_WARNING});
-		}
-	}, this)));
 
-       	headerrow.appendChild(row);
-       
-       	tablebody = document.createElement("div");
-       	config_content.appendChild(tablebody);
-	
-       	var config_body = document.createElement("div");
-	tablebody.appendChild(config_body);  
-        
-//	var repository_text = new StyledElements.StyledTextField();                ///////////////// CONVERTIR ESTO A UN SELECT
+	var upper_wrapper = document.createElement("div");
+	upper_wrapper.id = "upper_wrapper";
+
+        configAlternative.appendChild(upper_wrapper);
 
 
-	var url_text = new StyledElements.StyledTextField();
-	
-//	this.form_config["repository"] = this.select_repository.getValue();				// ASIGNAR EL VALOR DEL SELECT, QUE PUTADA PORQ EL SELECT ES ACCESO A API!!
+	var lower_wrapper = document.createElement("div");
+	lower_wrapper.id = "lower_wrapper";
 
-	this.form_config["url"] = url_text;
-
-       	row = document.createElement("div");
-	row.appendChild(this._createCell(document.createTextNode("Repository: "), "title"));
-
-// SELECT DEL CONFIG
-
-	var select_repos = document.createElement("div");
-	select_repos.id = "select_repos";
-	row.appendChild(select_repos);
+        configAlternative.appendChild(lower_wrapper);
 
 
-	config_body.appendChild(row);
-	
-	row = document.createElement("div");
-	row.appendChild(this._createCell(document.createTextNode("Url" + ":"), "title"));
-	row.appendChild(this._createCell(url_text, "value"));
-	if (this.is_configured) {
-		this.form_config["url"].setValue(this.url);
-	}
-	config_body.appendChild(row);
+	var save_wrapper = document.createElement("div");
+	save_wrapper.id = "save_wrapper";
 
-  /* Radio button */
+        configAlternative.appendChild(save_wrapper);
 
-	var radiobutton;
+	// Upper Wrapper
 
-	this.github_radio = new StyledElements.ButtonsGroup('radio');
-	radiobutton = new StyledElements.StyledRadioButton(this.github_radio, 'yes');
-	radiobutton.insertInto(config_body);
-	radiobutton = new StyledElements.StyledRadioButton(this.github_radio, 'no', {initiallyChecked: true});
-	radiobutton.insertInto(config_body);
+	// Config1 - API's URL
 
-//	github_radio.addEventListener('change', this.github_change);
+	var config1 = document.createElement("div");
+	config1.id = "config1";
 
-	// If there are Saved settings, load Commits Alternative, else, it displays the configuration alternative.
+	upper_wrapper.appendChild(config1);
 
-	if ((this.first_load) && (this.is_configured)) {
+		var text1 = document.createElement("div");
+		text1.id = "text1";
+		text1.innerHTML = "<b>API's Url: </b>"
 
-		this.getRepositories(this.url);
+		config1.appendChild(text1);
 
-	}
+		var input_url = document.createElement("div");
+		input_url.id = "input_url";
+
+		var url_text = new StyledElements.StyledTextField({id:"url_api"});
+		this.form_config["url"] = url_text;
+
+		url_text.insertInto(input_url);
+
+		var url_button = document.createElement("button");
+		url_button.id = "TestAPI";
+		url_button.innerHTML = "Accept";	
+		url_button.addEventListener("click",this.accept_config1, false);
+
+		input_url.appendChild(url_button); 
+
+		config1.appendChild(input_url);
 
 
+	// Config2 - Access Type
+		
+	var config2 = document.createElement("div");
+	config2.id = "config2";
 
-	if(this.is_configured) {
-			
-		this.getBranches(this.url, this.repository);
+	upper_wrapper.appendChild(config2);
 
-	}
+		var text2 = document.createElement("div");
+		text2.id = "text2";
+		text2.innerHTML = "<b>Access Type:</b>";
+
+		config2.appendChild(text2);
+
+		var radio1 = document.createElement("div");
+		radio1.id = "div_radio1";
+		config2.appendChild(radio1);
+
+		var radiobutton;
+		this.github_radio = new StyledElements.ButtonsGroup('radio');
+
+		radiobutton = new StyledElements.StyledRadioButton(this.github_radio, 'local', {initiallyChecked: true, id: "radio1"});
+		radiobutton.insertInto(radio1);
+
+			var textradio1 = document.createElement("div");
+			textradio1.id = "textradio1";
+			textradio1.innerHTML = "Local Access";
+			radio1.appendChild(textradio1);
+		
+		var radio2 = document.createElement("div");
+		radio2.id = "div_radio2";
+		config2.appendChild(radio2);
+
+		radiobutton = new StyledElements.StyledRadioButton(this.github_radio, 'github', {id: "radio2"});
+		radiobutton.insertInto(radio2);
+
+			var textradio2 = document.createElement("div");
+			textradio2.id = "textradio2";
+			textradio2.innerHTML = "Github Access";
+			radio2.appendChild(textradio2)
+
+		var access_button = document.createElement("button");
+		access_button.id = "button2";
+		access_button.innerHTML = "Accept";
+		access_button.addEventListener("click",this.accept_config2, false);
+
+		config2.appendChild(access_button);
+
+
+	// Config3 - Local Access
+
+	var config3 = document.createElement("div");
+	config3.id = "config3";
+
+	lower_wrapper.appendChild(config3);
+
+		var text3 = document.createElement("div");
+		text3.id = "text3";
+		text3.innerHTML = "<b>Local config:</b>"
+		config3.appendChild(text3);
+
+		var local_repository = document.createElement("div");
+		local_repository.id = "local_repository";
+		local_repository.innerHTML = "Select Repository";
+		config3.appendChild(local_repository);
+
+		// Select local repository (filled with data later)
+
+		var input_repository = document.createElement("div");
+		input_repository.id = "input_repository";	
+		config3.appendChild(input_repository);
+
+	// Config4 - Github Access
+
+	var config4 = document.createElement("div");
+	config4.id = "config4";
+
+	lower_wrapper.appendChild(config4);
+
+		var text4 = document.createElement("div");
+		text4.id = "text4";
+		text4.innerHTML = "<b>Github config:</b>"		
+		config4.appendChild(text4);
+
+		var github_user = document.createElement("div");
+		github_user.id = "github_user"
+		config4.appendChild(github_user);
+
+		var user_text = document.createElement("div");
+		user_text.id = "user_text";
+		user_text.innerHTML = "User:";
+		github_user.appendChild(user_text);
+		
+		var github_user_text = new StyledElements.StyledTextField({id:"user"});
+		this.form_config["user"] = github_user_text;
+		github_user_text.insertInto(github_user);		
+
+		var github_repo = document.createElement("div");
+		github_repo.id = "github_repo"
+		config4.appendChild(github_repo);
+		
+		var repo_text = document.createElement("div");
+		repo_text.id = "repo_text";
+		repo_text.innerHTML = "Repository:";
+		github_repo.appendChild(repo_text);
+
+		var github_repo_text = new StyledElements.StyledTextField({id:"repo"});
+		this.form_config["repo"] = github_repo_text;
+		github_repo_text.insertInto(github_repo);
+
+
+	// Save config
+
+	var save_config = document.createElement("div");
+	save_config.id = "save_config";
+	save_wrapper.appendChild(save_config);
+
+
+	var save_button = document.createElement("button");
+	save_button.id = "save";
+	save_button.innerHTML = "Save Config";
+	save_button.addEventListener("click",this.saveForm, false);
+
+	save_config.appendChild(save_button);
+
+
+	var clear_button = document.createElement("button");
+	clear_button.id = "clear";
+	clear_button.innerHTML = "Clear Data";
+	clear_button.addEventListener("click",this.clear_config, false);
+
+	save_config.appendChild(clear_button);
+
 
 	this.alternatives.insertInto(content);
+
+	this.disable_config2();					//Disable config2
+	this.disable_config3();					//Disable config3
+	this.disable_config4();					//Disable config4
+	this.disable_save();					//Disable save button
+
+}
+
+///////////////////////////////////////////////////////// Button behaviour
+
+git_repository.prototype.accept_config1 = function () {
+
+	// This function grabs the info from "url_text" and does the following:
+	//		1) Check that the text input is not empty
+	//			- if it's empty, error message.
+	//			- if it's not empty, go to 2.
+	//		2) Check if the API's URL inserted is online by sending a GET.
+
+	var url = git_repository.form_config["url"].getValue();
+
+	if (url != ""){
+		git_repository.getTest(url);
+	}
+	else
+	{
+		git_repository.alert("Error", "Must fill in URL's text field", EzWebExt.ALERT_ERROR);
+	}	
 
 
 }
 
-git_repository.prototype.github_change = function(radio) {
 
-        var text = '';
-        var value = radio.getValue();
+git_repository.prototype.accept_config2 = function () {
+
+	// This function grabs the info from the acces radio buttons (local//github) and does the following:
+	//		1) Check the radio buttons
+	//			- if it's set to local access, go to 2.
+	//			- if it's set to github access, go to 3.
+	//		2) Local access:
+	//			- Set the form_config[github] variable to false
+	//			- enable config3 and save functions.
+	//			- Send a GET command to the API to get the local repositories.
+	//		3) Github access:
+	//			- Set the form_config[github] variable to true
+	//			- Enable config4 and save functions.
+
+
+        var value = git_repository.github_radio.getValue();
 	
-        if (value == 'yes') {
-		this.github = true;
+        if (value == 'github') {
+		git_repository.form_config["github"] = true;
+		git_repository.enable_config4();
+		git_repository.enable_save();
 	}
 	else {
-		this.github = false;
+		git_repository.form_config["github"] = false;
+		git_repository.enable_config3();
+		git_repository.enable_save();
+		git_repository.getRepositories(git_repository.url);
 	}
 
+
+}
+
+
+///////////////////////////////////////////////////////// Disable Config functions
+
+git_repository.prototype.disable_config1 = function () {
+
+	document.getElementById("text1").style.color = "lightgray";
+	document.getElementById("url_api").style.background = "lightgray";
+	document.getElementById("url_api").childNodes[0].childNodes[0].style.color = "gray";
+	document.getElementById("url_api").childNodes[0].childNodes[0].style.background = "lightgray";
+	document.getElementById("url_api").childNodes[0].childNodes[0].disabled = "true";
+	document.getElementById("TestAPI").disabled = true;
+
+}
+
+git_repository.prototype.disable_config2 = function () {
+
+	document.getElementById("text2").style.color = "gray";
+	document.getElementById("radio1").disabled = true;
+	document.getElementById("textradio1").style.color = "lightgray";
+	document.getElementById("radio2").disabled = true;
+	document.getElementById("textradio2").style.color = "lightgray";
+	document.getElementById("button2").disabled = true;
+
+}
+
+git_repository.prototype.disable_config3 = function () {
+
+	document.getElementById("text3").style.color = "gray";
+	document.getElementById("local_repository").style.color = "lightgray";
+//	document.getElementById("input_repository").disabled = true;	
+
+}
+
+git_repository.prototype.disable_config4 = function () {
+
+	document.getElementById("text4").style.color = "grey";
+	document.getElementById("user_text").style.color = "lightgrey";
+	document.getElementById("repo_text").style.color = "lightgrey";
+
+	document.getElementById("user").style.background = "lightgray";
+	document.getElementById("user").childNodes[0].childNodes[0].style.color = "gray";
+	document.getElementById("user").childNodes[0].childNodes[0].style.background = "lightgray";
+	document.getElementById("user").childNodes[0].childNodes[0].disabled = "true";
+
+	document.getElementById("repo").style.background = "lightgray";
+	document.getElementById("repo").childNodes[0].childNodes[0].style.color = "gray";
+	document.getElementById("repo").childNodes[0].childNodes[0].style.background = "lightgray";
+	document.getElementById("repo").childNodes[0].childNodes[0].disabled = "true";
+
+}
+
+git_repository.prototype.disable_save = function () {
+
+	document.getElementById("save").disabled = true;
+
+}
+
+///////////////////////////////////////////////////////// Enable Config functions
+
+git_repository.prototype.enable_config1 = function () {
+
+	document.getElementById("text1").style.color = "black";
+	document.getElementById("url_api").style.background = "white";
+	document.getElementById("url_api").childNodes[0].childNodes[0].style.color = "black";
+	document.getElementById("url_api").childNodes[0].childNodes[0].disabled = "false";
+	document.getElementById("TestAPI").disabled = false;
+
+}
+
+git_repository.prototype.enable_config2 = function () {
+
+	document.getElementById("text2").style.color = "black";
+	document.getElementById("radio1").disabled = false;
+	document.getElementById("textradio1").style.color = "black";
+	document.getElementById("radio2").disabled = false;
+	document.getElementById("textradio2").style.color = "black";
+	document.getElementById("button2").disabled = false;
+
+}
+
+git_repository.prototype.enable_config3 = function () {
+
+	document.getElementById("text3").style.color = "black";
+	document.getElementById("local_repository").style.color = "black";
+//	document.getElementById("input_repository").disabled = false;
+
+}
+
+git_repository.prototype.enable_config4 = function () {
+
+	document.getElementById("text4").style.color = "black";
+	document.getElementById("user_text").style.color = "black";
+	document.getElementById("repo_text").style.color = "black";
+
+	document.getElementById("user").style.background = "white";
+	document.getElementById("user").childNodes[0].childNodes[0].style.color = "black";
+	document.getElementById("user").childNodes[0].childNodes[0].style.background = "white";
+	document.getElementById("user").childNodes[0].childNodes[0].disabled = "false";
+
+	document.getElementById("repo").style.background = "white";
+	document.getElementById("repo").childNodes[0].childNodes[0].style.color = "black";
+	document.getElementById("repo").childNodes[0].childNodes[0].style.background = "white";
+	document.getElementById("repo").childNodes[0].childNodes[0].disabled = "false";
+
+}
+
+git_repository.prototype.enable_save = function () {
+
+	document.getElementById("save").disabled = false;
 
 }
 
@@ -265,6 +501,14 @@ git_repository.prototype._createHeaderButton = function(src, title, handler) {
 	return div
 }
 
+///////////////////////////////////////////////////////// Send GET's
+
+git_repository.prototype.getTest = function (url) {
+
+	this.sendGet(url+"?op=-1&github=0", this.TestOk, this.TestFailed, this.TestFailed);
+
+}
+
 git_repository.prototype.getRepositories = function (url) {
 
 	this.sendGet(url+"?github=0&op=0", this.displayRepos, this.displayErrorRepos, this.displayExceptionRepos);
@@ -274,7 +518,11 @@ git_repository.prototype.getRepositories = function (url) {
 git_repository.prototype.getBranches = function (url, repository) {
 
 	if (this.github) {
-		this.sendGet(url+"?github=1&repository="+repository[1]+"&op=1", this.displayBranches, this.displayErrorBranches, this.displayExceptionBranches);
+
+		var user = this.repository.split(';')[0];
+		var repo = this.repository.split(';')[1];
+
+		this.sendGet(url+"?github=1&repository="+repo+"&user="+user+"&op=1", this.displayBranches, this.displayErrorBranches, this.displayExceptionBranches);
 	}
 	else {
 		this.sendGet(url+"?github=0&repository="+repository[1]+"&op=1", this.displayBranches, this.displayErrorBranches, this.displayExceptionBranches);
@@ -303,6 +551,22 @@ git_repository.prototype.getCommits = function (url, repository, page) {
 
 }
 
+
+///////////////////////////////////////////////////////// GET's OK responses
+
+
+git_repository.prototype.TestOk = function(resp) {
+
+	if (resp.responseText == "OK"){
+		this.disable_config1();
+		this.enable_config2();
+	}
+	else
+	{
+		this.alert("Error", "The specified URL does not host a valid API", EzWebExt.ALERT_ERROR);
+	}
+}
+
 git_repository.prototype.displayRepos = function(resp) {
 
 	var resp_json = eval('(' + resp.responseText + ')');
@@ -321,11 +585,14 @@ git_repository.prototype.displayRepos = function(resp) {
 	this.select_repository = new StyledElements.StyledSelect({initialEntries: this.lista_repos, initialValue: this.repository[0]});
 	this.select_repository.addEventListener('change', this.change_repository);
 
+	this.form_config["repository_index"] = repository[0];
+	this.form_config["repository"] = this.lista_repos[this.form_config["repository_index"]][1];
+
 	this.select_repository.id = "select";
 
 //	this.select_repository.wrapperElement.style.cssFloat = 'right';
 
-	this.select_repository.insertInto(document.getElementById('select_repos'));
+	this.select_repository.insertInto(document.getElementById('input_repository'));
 
 //	this.first_load = false;
 
@@ -605,6 +872,16 @@ git_repository.prototype.show_commit = function(commit) {
 }
 
 
+
+
+
+git_repository.prototype.TestFailed = function() {
+
+	this.alert("Error on API's URL", "Can't acces the specified API's URL", EzWebExt.ALERT_ERROR);
+
+}
+
+
 git_repository.prototype.displayErrorBranches = function(n_error) {
 
 	this.alert("Error Branches", "No se puede acceder al repositorio: "+ n_error, EzWebExt.ALERT_ERROR);
@@ -689,18 +966,33 @@ git_repository.prototype._createCell = function(element, className) {
 
 
 git_repository.prototype.saveForm = function() {
-	this.repository[0] = this.form_config["repository_index"];
-	this.repository[1] = this.form_config["repository"];
-	this.github_change(this.github_radio)
+
+	if (this.github = false) 
+	{
+		this.repository[0] = this.form_config["repository_index"];
+		this.repository[1] = this.form_config["repository"];
+	}
+	else
+	{
+		var user = this.form_config["repo"].getValue();
+		var repo = this.form_config["repo"].getValue();
+		this.repository[1] = user+";"+repo;
+	}
+
+	this.github = this.form_config["github"].getValue();
 	this.url = this.form_config["url"].getValue();
-	this.page = 0; 
+
+	this.page = 0;
 	this.pagant_enabled = false;
 	this.is_configured = true;
-	this.save();
 	this.changed_repo = true;
+	this.save();
 	this.getBranches(this.url, this.repository);
 }
 
+git_repository.prototype.clear_config = function () {
+
+}
 
 git_repository.prototype.save = function() {
 
