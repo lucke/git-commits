@@ -3,6 +3,67 @@ body {
 	font-family:'Lucida Grande',sans-serif;
 
 }
+
+#loading_background {
+	position: absolute;
+	top: 0px;
+	bottom: 0px;
+	right: 0px;
+	left: 0px;
+	z-index: 998;
+	margin: auto;
+	height:100%;
+	width:100%;
+	background-color: rgba(0,0,0,0.5);
+}
+
+#loading {
+
+	position: absolute;
+	top: 0px;
+	bottom: 0px;
+	right: 0px;
+	left: 0px;
+	margin: auto;
+	z-index:999;
+	height:72px;
+	width:265px;
+	background-color: white;
+	-moz-border-radius:10px;
+	min-width: 250px;
+	min-height: 100px;
+
+}
+
+#loading_wrapper {
+
+	position: absolute;
+	top: 0px;
+	bottom: 0px;
+	right: 0px;
+	left: 0px;
+	margin: auto;
+	height: 35px;
+	width: 225px;
+
+
+}
+
+#loading_text {
+
+	margin-left: 50px;
+	font-size:12px;
+	height:14px;
+	width:100%;
+}
+
+#loading_img {
+
+	height:50%;
+	width:100%;
+} 
+
+
 #header {
 	background-color: #663333;
 	height: 32px;
@@ -11,9 +72,27 @@ body {
 
 #header #header_left {
 	background-color: #663333;
-	width: 50%;
+	width: 60%;
 	height: 100%;
 	float: left;
+
+}
+
+#header #header_left_text {
+	background-color: #663333;
+	float: left;
+	color: white;
+	margin-top: 8px;
+	margin-left: 20px;
+	font-size: 13px;
+}
+
+#header_right_text {
+	color:white;
+	float:right;
+	font-size:13px;
+	margin-right:4px;
+	margin-top:6px;
 }
 
 #header_left .image {
@@ -29,7 +108,7 @@ body {
 
 #header #header_right {
 	background-color: #663333;
-	width: 50%;
+	width: 40%;
 	height: 100%;
 	float: right;
 	position: relative;
@@ -41,7 +120,10 @@ body {
 
 }
 
+#select_wrapper {
+	margin-top: 2px;
 
+}
 
 #content {
 
