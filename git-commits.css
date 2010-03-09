@@ -1,0 +1,385 @@
+body {
+	background-color:#FFFF99;
+	font-family:'Lucida Grande',sans-serif;
+
+}
+
+#loading_background {
+	position: absolute;
+	top: 0px;
+	bottom: 0px;
+	right: 0px;
+	left: 0px;
+	z-index: 998;
+	margin: auto;
+	height:100%;
+	width:100%;
+	background-color: rgba(0,0,0,0.5);
+}
+
+#loading {
+
+	position: absolute;
+	top: 0px;
+	bottom: 0px;
+	right: 0px;
+	left: 0px;
+	margin: auto;
+	z-index:999;
+	height:72px;
+	width:265px;
+	background-color: white;
+	-moz-border-radius:10px;
+	min-width: 250px;
+	min-height: 100px;
+
+}
+
+#loading_wrapper {
+
+	position: absolute;
+	top: 0px;
+	bottom: 0px;
+	right: 0px;
+	left: 0px;
+	margin: auto;
+	height: 35px;
+	width: 225px;
+
+
+}
+
+#loading_text {
+
+	margin-left: 50px;
+	font-size:12px;
+	height:14px;
+	width:100%;
+}
+
+#loading_img {
+
+	height:50%;
+	width:100%;
+} 
+
+
+#header {
+	background-color: #663333;
+	height: 32px;
+	width: 100%;
+}
+
+#header #header_left {
+	background-color: #663333;
+	width: 60%;
+	height: 100%;
+	float: left;
+
+}
+
+#header #header_left_text {
+	background-color: #663333;
+	float: left;
+	color: white;
+	margin-top: 8px;
+	margin-left: 20px;
+	font-size: 13px;
+}
+
+#header_right_text {
+	color:white;
+	float:right;
+	font-size:13px;
+	margin-right:4px;
+	margin-top:6px;
+}
+
+#header_left .image {
+	padding-left: 10px;
+	float: left;
+}
+
+#header_left .image img {
+	cursor: pointer;
+	position: relative;
+	top: 5px;
+}
+
+#header #header_right {
+	background-color: #663333;
+	width: 40%;
+	height: 100%;
+	float: right;
+	position: relative;
+}
+
+#header_right .select {
+	position: relative;
+	float: right;
+
+}
+
+#select_wrapper {
+	margin-top: 2px;
+
+}
+
+#content {
+
+}
+
+#content_left {
+
+}
+
+#content_right {
+	
+}
+
+
+
+#upper_wrapper {
+	-moz-border-radius-topleft:10px;
+	-moz-border-radius-topright:10px;
+	background-color:#FFCC66;
+	display: table;
+	margin-left: auto;
+	margin-right: auto;
+	margin-top: 15px;
+        width: 500px;
+}
+
+#lower_wrapper {
+	-moz-border-radius-bottomleft:10px;
+	-moz-border-radius-bottomright:10px;
+	background-color:#FFCC66;
+	display: table;
+	margin-left: auto;
+	margin-right: auto;
+	margin-bottom: 10px;
+        width: 500px;
+}
+
+#save_wrapper {
+
+	-moz-border-radius-topleft:10px;
+	-moz-border-radius-topright:10px;
+	-moz-border-radius-bottomleft:10px;
+	-moz-border-radius-bottomright:10px;
+	background-color:#CC3300;
+	display: table;
+	margin-left: auto;
+	margin-right: auto;
+        width: 500px;
+}
+
+
+
+#config1 {
+	-moz-border-radius-topleft:10px;
+	-moz-border-radius-topright:10px;
+	-moz-border-radius-bottomleft:10px;
+	-moz-border-radius-bottomright:10px;
+	margin-top:10px;
+	margin-left:10px;
+	margin-right:5px;
+	margin-bottom:5px;
+	background-color:#FFFFFF;
+	float: left;
+	height: 135px;
+	width: 233px;
+	border: #000 1px solid ;
+
+}
+
+
+#text1 {
+	margin-top:10px;
+	margin-left:10px;
+	margin-right:10px;
+}
+
+#text2 {
+	margin-top:10px;
+	margin-left:10px;
+	margin-right:10px;
+}
+
+#text3 {
+	margin-top:10px;
+	margin-left:10px;
+	margin-right:10px;
+}
+
+#text4 {
+	margin-top:10px;
+	margin-left:10px;
+	margin-right:10px;
+}
+
+#input_url {
+	margin-left: 40px;
+	margin-top: 10px;
+}
+
+
+#config2 {
+	-moz-border-radius-topleft:10px;
+	-moz-border-radius-topright:10px;
+	-moz-border-radius-bottomleft:10px;
+	-moz-border-radius-bottomright:10px;
+	display: block;
+	margin-top:10px;
+	margin-left:5px;
+	margin-right:10px;
+	margin-bottom:5px;
+	background-color:#FFFFFF;
+	float: right;
+	height: 135px;
+	width: 233px;
+	border: #000 1px solid ;
+}
+
+#radio1{
+	float: left;
+	font-size:14px;
+	margin-top:15px;
+	margin-left:75px;
+}
+
+#radio2{
+	float: left;
+	font-size:14px;
+	margin-top:15px;
+	margin-left:75px;
+}
+
+#div_radio1{
+	display: table;
+}
+
+#div_radio2{
+	display: table;
+}
+
+#textradio1{
+	float:right;
+	margin-top:14px;
+	font-size: 14px;
+}
+
+#textradio2{
+	float:right;
+	margin-top:14px;
+	font-size: 14px;
+}
+
+#button2{
+	margin-left:85px;
+	margin-top:10px;
+}
+
+#config3 {
+	-moz-border-radius-topleft:10px;
+	-moz-border-radius-topright:10px;
+	-moz-border-radius-bottomleft:10px;
+	-moz-border-radius-bottomright:10px;
+	margin-top:5px;
+	margin-left:10px;
+	margin-right:5px;
+	margin-bottom:5px;
+	background-color:#FFFFFF;
+	float: left;
+	height: 135px;
+	width: 233px;
+	border: #000 1px solid ;
+}
+
+
+#local_repository {
+	font-size:12px;
+	margin-top:20px;
+	text-align:center;
+
+}
+
+#input_repository {
+	margin-top:10px;
+	margin-left: 47px;
+	text-align:left;
+
+}
+
+#config4 {
+	-moz-border-radius-topleft:10px;
+	-moz-border-radius-topright:10px;
+	-moz-border-radius-bottomleft:10px;
+	-moz-border-radius-bottomright:10px;
+	margin-top:5px;
+	margin-left:5px;
+	margin-right:10px;
+	margin-bottom:5px;
+	background-color:#FFFFFF;
+	float: right;
+	height: 135px;
+	width: 233px;
+	border: #000 1px solid ;
+
+}
+
+#github_user {
+
+	margin-top: 20px;
+	margin-left: 65px;
+	font-size: 14px;
+
+}
+
+#github_repo {
+	margin-left: 25px;
+	font-size: 14px;;
+}
+
+#user_text {
+	margin-top: 3px;
+	float: left;
+}
+
+
+#user {
+	width: 100px;
+	float: right;
+	margin-right:15px;
+
+}
+
+#repo_text {
+	float: left;
+	margin-top:14px;
+}
+
+#repo {
+	float:right;
+	width: 100px;
+	margin-right:15px;
+
+}
+
+
+#save_config {
+
+	margin-top:4px;
+	margin-left:250px;
+	margin-right:20px;
+	margin-bottom:5px;
+	float: right;
+
+}
+
+#TestAPI {
+	margin-left:2px;
+}
+
+
+
